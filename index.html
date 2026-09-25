@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="A simple to-do list that saves your tasks locally in the browser.">
+  <title>Gambit Tasks</title>
+  <link rel="stylesheet" href="styles.css">
+  <script defer src="app.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <section class="todo-card" aria-labelledby="app-title">
+      <header class="app-header">
+        <div>
+          <p class="eyebrow">Gambit Advisory</p>
+          <h1 id="app-title">Today’s tasks</h1>
+          <p class="subtitle">Plan clearly. Move confidently.</p>
+        </div>
+        <div class="status-dot" title="Saved locally" aria-label="Saved locally"></div>
+      </header>
+
+      <form id="todo-form" class="todo-form">
+        <label class="sr-only" for="todo-input">Add a task</label>
+        <input id="todo-input" name="task" type="text" maxlength="160" placeholder="What needs to get done?" autocomplete="off" required>
+        <button type="submit" class="primary-button">Add task</button>
+      </form>
+
+      <div class="toolbar">
+        <div class="filters" role="group" aria-label="Filter tasks">
+          <button class="filter-button active" type="button" data-filter="all">All</button>
+          <button class="filter-button" type="button" data-filter="active">Active</button>
+          <button class="filter-button" type="button" data-filter="completed">Completed</button>
+        </div>
+        <button id="clear-completed" class="text-button" type="button">Clear completed</button>
+      </div>
+
+      <ul id="todo-list" class="todo-list" aria-live="polite"></ul>
+      <div id="empty-state" class="empty-state">
+        <span class="empty-icon" aria-hidden="true">✦</span>
+        <p id="empty-title">Your list is clear.</p>
+        <span id="empty-copy">Add a task above to get started.</span>
+      </div>
+
+      <footer class="app-footer">
+        <span id="task-count">0 tasks left</span>
+        <span class="storage-note"><span aria-hidden="true">●</span> Saved on this device</span>
+      </footer>
+    </section>
+  </main>
+</body>
+</html>
