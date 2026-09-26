@@ -9,7 +9,7 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from sportsdb import fetch_todays_fixtures, fetch_team_last_matches, filter_away_matches
+from thesportsdb_client import fetch_todays_fixtures, fetch_team_last_matches, filter_away_matches
 from forebet_scraper import fetch_forebet_predictions, match_prediction_to_fixture
 
 # ---------------------------------------------------------------------------
