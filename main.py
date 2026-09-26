@@ -9,7 +9,11 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from thesportsdb_client import fetch_todays_fixtures, fetch_team_last_matches, filter_away_matches
+from pipeworx_client import (
+    fetch_todays_fixtures,
+    fetch_team_away_matches,
+    calculate_away_stats,
+)
 from forebet_scraper import fetch_forebet_predictions, match_prediction_to_fixture
 
 # ---------------------------------------------------------------------------
@@ -113,11 +117,11 @@ def main() -> None:
     alerts = 0
     for fx in fixtures:
         try:
-            league_name = fx.get("strLeague", "Unknown")
-            home_name = fx.get("strHomeTeam", "?")
-            away_name = fx.get("strAwayTeam", "?")
-            away_id = fx.get("idAwayTeam")
-            kickoff_iso = fx.get("strTimestamp") or fx.get("dateEvent")
+            league_name = fx.get("league", {}).get("name", "Unknown")
+            home_name = fx.get("teams", {}).get("home", {}).get("name", "?")
+            away_name = fx.get("teams", {}).get("away", {}).get("name", "?")
+            away_id = fx.get("teams", {}).get("away", {}).get("id")
+            kickoff_iso = fx.get("fixture", {}).get("date")
 
             if not away_id or not kickoff_iso:
                 continue
@@ -133,8 +137,7 @@ def main() -> None:
             logger.info(f"Analyzing: {home_name} vs {away_name} ({league_name})")
 
             # 4. Away form from TheSportsDB
-            events = fetch_team_last_matches(session, away_id, limit=15)
-            away_matches = filter_away_matches(events, away_id)[:AWAY_MATCHES_TO_ANALYZE]
+            away_matches = fetch_team_away_matches(session, away_id, limit=AWAY_MATCHES_TO_ANALYZE)
             stats = calculate_away_stats(away_matches)
             if not stats:
                 logger.info(f"  -> no away match history, skip.")
