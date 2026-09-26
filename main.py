@@ -156,3 +156,19 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+
+    fixtures = fetch_todays_fixtures(session)
+    if not fixtures:
+        logger.warning("⚠️ No fixtures returned from TheSportsDB. This may be a "
+                       "free-tier limitation or genuinely no matches today.")
+        # Try a different data source here as fallback, OR send a Telegram
+        # heartbeat so you know the job ran:
+        try:
+            session.post(TELEGRAM_API_URL, json={
+                "chat_id": TELEGRAM_CHAT_ID,
+                "text": "⚠️ Football scan ran but TheSportsDB returned 0 fixtures. "
+                        "Data source may be broken or throttled.",
+            }, timeout=10)
+        except Exception:
+            pass
+        return
