@@ -133,13 +133,36 @@ def _pw_call(session: requests.Session, tool_name: str, arguments: Dict[str, Any
 
 def fetch_todays_fixtures(session: requests.Session) -> List[Dict[str, Any]]:
     """
-    Fetch each target league's upcoming fixtures from TheSportsDB and keep
-    only those matching today's UTC date. Returns raw TheSportsDB event dicts.
+    Fetch today's fixtures using two strategies in order:
+      1. eventsday.php for the whole day (best coverage when it works)
+      2. eventsnextleague.php per league (catches near-future fixtures)
+    Merge, dedupe by idEvent, filter to target leagues + today's date.
     """
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
-    fixtures: List[Dict[str, Any]] = []
+    target_ids = set(SDB_LEAGUE_IDS.keys())
+    by_id: Dict[str, Dict[str, Any]] = {}
 
+    # Strategy 1: eventsday (broad sweep)
+    try:
+        r = session.get(
+            f"{SDB_BASE}/eventsday.php",
+            params={"d": today, "s": "Soccer"},
+            timeout=15,
+        )
+        r.raise_for_status()
+        events = (r.json() or {}).get("events") or []
+        for e in events:
+            if str(e.get("idLeague")) in target_ids and e.get("dateEvent") == today:
+                by_id[e["idEvent"]] = e
+        logger.info(f"eventsday sweep: {len(events)} total events, "
+                    f"{sum(1 for e in events if str(e.get('idLeague')) in target_ids)} in target leagues.")
+    except Exception as e:
+        logger.warning(f"eventsday sweep failed: {e}")
+
+    # Strategy 2: per-league next-league (backstop for whatever eventsday missed)
     for league_id, league_name in SDB_LEAGUE_IDS.items():
+        if any(f.get("idLeague") == league_id for f in by_id.values()):
+            continue  # already have today's fixtures for this league
         try:
             r = session.get(
                 f"{SDB_BASE}/eventsnextleague.php",
@@ -148,15 +171,15 @@ def fetch_todays_fixtures(session: requests.Session) -> List[Dict[str, Any]]:
             )
             r.raise_for_status()
             events = (r.json() or {}).get("events") or []
-            today_count = 0
-            for e in events:
-                if e.get("dateEvent") == today:
-                    fixtures.append(e)
-                    today_count += 1
-            logger.info(f"TheSportsDB {league_name}: {len(events)} upcoming, {today_count} today.")
+            today_events = [e for e in events if e.get("dateEvent") == today]
+            if today_events:
+                logger.info(f"{league_name}: {len(today_events)} today via nextleague.")
+            for e in today_events:
+                by_id[e["idEvent"]] = e
         except Exception as e:
-            logger.warning(f"TheSportsDB {league_name} error: {e}")
+            logger.warning(f"{league_name} nextleague failed: {e}")
 
+    fixtures = list(by_id.values())
     logger.info(f"Fixtures collected: {len(fixtures)} today across target leagues.")
     return fixtures
 
