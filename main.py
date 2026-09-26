@@ -117,11 +117,11 @@ def main() -> None:
     alerts = 0
     for fx in fixtures:
         try:
-            league_name = fx.get("league", {}).get("name", "Unknown")
-            home_name = fx.get("teams", {}).get("home", {}).get("name", "?")
-            away_name = fx.get("teams", {}).get("away", {}).get("name", "?")
-            away_id = fx.get("teams", {}).get("away", {}).get("id")
-            kickoff_iso = fx.get("fixture", {}).get("date")
+            league_name = fx.get("league", "Unknown")
+            home_name = fx.get("home", "?")
+            away_name = fx.get("away", "?")
+            away_id = fx.get("away_team_id")
+            kickoff_iso = fx.get("date")
 
             if not away_id or not kickoff_iso:
                 continue
