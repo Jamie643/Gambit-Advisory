@@ -30,11 +30,7 @@ TARGET_LEAGUE_IDS = {
 def fetch_team_last_matches(
     session: requests.Session, team_id: str, limit: int = 15
 ) -> List[Dict[str, Any]]:
-    """
-    Fetch a team's last N events (all venues).
-    We'll filter to away matches client-side.
-    Endpoint: /eventslast.php?id={team_id}
-    """
+    """Fetch a team's last N events (all venues)."""
     url = f"{BASE_URL}/eventslast.php"
     params = {"id": team_id}
     try:
@@ -50,13 +46,9 @@ def fetch_team_last_matches(
 
 
 def filter_away_matches(events: List[Dict[str, Any]], team_id: str) -> List[Dict[str, Any]]:
-    """
-    Filter events to only those where the given team was the away side.
-    TheSportsDB event fields: idHomeTeam, idAwayTeam, intHomeScore, intAwayScore
-    """
+    """Filter events to only those where the given team was the away side."""
     away = []
     for e in events:
-        home_id = str(e.get("idHomeTeam") or "")
         away_id = str(e.get("idAwayTeam") or "")
         if away_id == str(team_id):
             away.append(e)
@@ -64,10 +56,7 @@ def filter_away_matches(events: List[Dict[str, Any]], team_id: str) -> List[Dict
 
 
 def fetch_todays_fixtures(session: requests.Session) -> List[Dict[str, Any]]:
-    """
-    Fetch all of today's fixtures across target leagues.
-    Endpoint: /eventsday.php?d={YYYY-MM-DD}&s=Soccer
-    """
+    """Fetch all of today's fixtures across target leagues."""
     today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
     url = f"{BASE_URL}/eventsday.php"
     params = {"d": today, "s": "Soccer"}
@@ -76,7 +65,6 @@ def fetch_todays_fixtures(session: requests.Session) -> List[Dict[str, Any]]:
         r.raise_for_status()
         data = r.json()
         events = data.get("events") or []
-        # Filter to target leagues
         filtered = [e for e in events if str(e.get("idLeague") or "") in TARGET_LEAGUE_IDS]
         logger.info(f"TheSportsDB: {len(filtered)} target fixtures today (out of {len(events)}).")
         return filtered
@@ -86,7 +74,7 @@ def fetch_todays_fixtures(session: requests.Session) -> List[Dict[str, Any]]:
 
 
 def search_team(session: requests.Session, name: str) -> Optional[str]:
-    """Lookup a team ID by name. Used as fallback if fixture lacks team ID."""
+    """Lookup a team ID by name."""
     url = f"{BASE_URL}/searchteams.php"
     params = {"t": name}
     try:
