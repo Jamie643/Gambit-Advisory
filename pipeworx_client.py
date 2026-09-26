@@ -118,6 +118,8 @@ def fetch_todays_fixtures(session: requests.Session) -> List[Dict[str, Any]]:
             "_apiKey": API_FOOTBALL_KEY,
         }
         result = _call_tool(session, "fixtures", args)
+        if league_id == TARGET_LEAGUE_IDS[0]:  # only log the first league
+            logger.info(f"[DEBUG] league {league_id} raw result: {json.dumps(result)[:600]}")
         if not isinstance(result, dict):
             continue
         fixtures = result.get("fixtures") or []
